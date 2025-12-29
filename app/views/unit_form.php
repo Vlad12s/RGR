@@ -1,6 +1,3 @@
-<?php
-// expects $edit, $unit, $cmds (commanders)
-?>
 <h1><?= $edit ? 'Edit unit' : 'Create unit' ?></h1>
 <form method='post'>
   Name: <input name='name' value='<?= htmlspecialchars($unit['unit_name'] ?? '') ?>' required><br><br>
@@ -11,7 +8,7 @@
     <?php foreach ($cmds as $c): ?>
       <option value='<?= $c['commander_id'] ?>'
         <?= (isset($unit['commander_id']) && $unit['commander_id']==$c['commander_id']) ? 'selected' : '' ?>>
-        <?= htmlspecialchars($c['name']) ?>
+        <?= htmlspecialchars($c['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
       </option>
     <?php endforeach; ?>
   </select><br><br>

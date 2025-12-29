@@ -1,8 +1,6 @@
 <?php
-// crud_product.php
-require __DIR__ . '/db.php';
+require __DIR__ .'/db.php';
 
-echo "<h2>Product CRUD</h2>";
 $action = $_GET['action'] ?? 'list';
 
 if ($action === 'list') {
@@ -13,8 +11,8 @@ if ($action === 'list') {
         $id = $r['product_id'];
         echo "<tr>
             <td>{$id}</td>
-            <td>" . htmlspecialchars($r['name']) . "</td>
-            <td>" . htmlspecialchars($r['price']) . "</td>
+            <td>".htmlspecialchars($r['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')."</td>
+            <td>{$r['price']}</td>
             <td>
                 <a href='?entity=product&action=edit&id={$id}'>Edit</a> |
                 <a href='?entity=product&action=delete&id={$id}' onclick='return confirm(\"Delete?\")'>Delete</a>
@@ -25,46 +23,48 @@ if ($action === 'list') {
     exit;
 }
 
-if ($action === 'create') {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $stmt = $pdo->prepare("INSERT INTO Product (name, price) VALUES (:name, :price)");
-        $stmt->execute(['name'=>$_POST['name'],'price'=>$_POST['price']]);
-        header("Location: ?entity=product");
-        exit;
-    }
-    echo "<h3>Create product</h3>";
-    echo "<form method='post'>
-        Name: <input name='name' required><br>
-        Price: <input name='price' type='number' step='0.01' required><br>
-        <button>Create</button>
-    </form>";
-    exit;
-}
+if ($action === 'create' || $action === 'edit') {
+    $edit = $action === 'edit';
+    $product = ['name'=>'','price'=>''];
 
-if ($action === 'edit') {
-    $id = (int)($_GET['id'] ?? 0);
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $stmt = $pdo->prepare("UPDATE Product SET name = :name, price = :price WHERE product_id = :id");
-        $stmt->execute(['name'=>$_POST['name'],'price'=>$_POST['price'],'id'=>$id]);
-        header("Location: ?entity=product");
-        exit;
+    if ($edit) {
+        $id = (int)($_GET['id'] ?? 0);
+        $stmt = $pdo->prepare("SELECT * FROM Product WHERE product_id=:id");
+        $stmt->execute(['id'=>$id]);
+        $product = $stmt->fetch();
+        if (!$product) { echo "Not found"; exit; }
     }
-    $row = $pdo->prepare("SELECT * FROM Product WHERE product_id = :id");
-    $row->execute(['id'=>$id]);
-    $r = $row->fetch();
-    if (!$r) { echo "Not found"; exit; }
-    echo "<h3>Edit product</h3>";
-    echo "<form method='post'>
-        Name: <input name='name' value='".htmlspecialchars($r['name'])."' required><br>
-        Price: <input name='price' type='number' step='0.01' value='".htmlspecialchars($r['price'])."' required><br>
-        <button>Save</button>
-    </form>";
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $name = trim($_POST['name'] ?? '');
+        $price = trim($_POST['price'] ?? '');
+        $errors = [];
+
+        if ($name === '') $errors[] = "Name required";
+        if (!is_numeric($price) || $price < 0) $errors[] = "Price must be a positive number";
+
+        if (!$errors) {
+            if ($edit) {
+                $stmt = $pdo->prepare("UPDATE Product SET name=:name, price=:price WHERE product_id=:id");
+                $stmt->execute(['name'=>$name,'price'=>$price,'id'=>$id]);
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO Product (name, price) VALUES (:name, :price)");
+                $stmt->execute(['name'=>$name,'price'=>$price]);
+            }
+            header("Location: ?entity=product");
+            exit;
+        } else {
+            foreach ($errors as $e) echo "<p style='color:red'>".htmlspecialchars($e)."</p>";
+        }
+    }
+
+    require __DIR__ .'/../views/product_form.php';
     exit;
 }
 
 if ($action === 'delete') {
     $id = (int)($_GET['id'] ?? 0);
-    $stmt = $pdo->prepare("DELETE FROM Product WHERE product_id = :id");
+    $stmt = $pdo->prepare("DELETE FROM Product WHERE product_id=:id");
     $stmt->execute(['id'=>$id]);
     header("Location: ?entity=product");
     exit;

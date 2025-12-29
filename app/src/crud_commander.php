@@ -1,8 +1,6 @@
 <?php
-// crud_commander.php
 require __DIR__ . '/db.php';
 
-echo "<h2>Commander CRUD</h2>";
 $action = $_GET['action'] ?? 'list';
 
 if ($action === 'list') {
@@ -13,8 +11,8 @@ if ($action === 'list') {
         $id = $r['commander_id'];
         echo "<tr>
             <td>{$id}</td>
-            <td>".htmlspecialchars($r['name'])."</td>
-            <td>".htmlspecialchars($r['commander_rank'])."</td>
+            <td>".htmlspecialchars($r['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')."</td>
+            <td>".htmlspecialchars($r['commander_rank'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')."</td>
             <td>
                 <a href='?entity=commander&action=edit&id={$id}'>Edit</a> |
                 <a href='?entity=commander&action=delete&id={$id}' onclick='return confirm(\"Delete?\")'>Delete</a>
@@ -25,46 +23,48 @@ if ($action === 'list') {
     exit;
 }
 
-if ($action === 'create') {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $stmt = $pdo->prepare("INSERT INTO Commander (name, commander_rank) VALUES (:name, :rank)");
-        $stmt->execute(['name'=>$_POST['name'],'rank'=>$_POST['rank']]);
-        header("Location: ?entity=commander");
-        exit;
-    }
-    echo "<h3>Create commander</h3>";
-    echo "<form method='post'>
-        Name: <input name='name' required><br>
-        Rank: <input name='rank' required><br>
-        <button>Create</button>
-    </form>";
-    exit;
-}
+if ($action === 'create' || $action === 'edit') {
+    $edit = $action === 'edit';
+    $commander = ['name'=>'','commander_rank'=>''];
 
-if ($action === 'edit') {
-    $id = (int)($_GET['id'] ?? 0);
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $stmt = $pdo->prepare("UPDATE Commander SET name = :name, commander_rank = :rank WHERE commander_id = :id");
-        $stmt->execute(['name'=>$_POST['name'],'rank'=>$_POST['rank'],'id'=>$id]);
-        header("Location: ?entity=commander");
-        exit;
+    if ($edit) {
+        $id = (int)($_GET['id'] ?? 0);
+        $stmt = $pdo->prepare("SELECT * FROM Commander WHERE commander_id=:id");
+        $stmt->execute(['id'=>$id]);
+        $commander = $stmt->fetch();
+        if (!$commander) { echo "Not found"; exit; }
     }
-    $row = $pdo->prepare("SELECT * FROM Commander WHERE commander_id = :id");
-    $row->execute(['id'=>$id]);
-    $r = $row->fetch();
-    if (!$r) { echo "Not found"; exit; }
-    echo "<h3>Edit commander</h3>";
-    echo "<form method='post'>
-        Name: <input name='name' value='".htmlspecialchars($r['name'])."' required><br>
-        Rank: <input name='rank' value='".htmlspecialchars($r['commander_rank'])."' required><br>
-        <button>Save</button>
-    </form>";
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $name = trim($_POST['name'] ?? '');
+        $rank = trim($_POST['rank'] ?? '');
+        $errors = [];
+
+        if ($name === '') $errors[] = "Name required";
+        if ($rank === '') $errors[] = "Rank required";
+
+        if (!$errors) {
+            if ($edit) {
+                $stmt = $pdo->prepare("UPDATE Commander SET name=:name, commander_rank=:rank WHERE commander_id=:id");
+                $stmt->execute(['name'=>$name,'rank'=>$rank,'id'=>$id]);
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO Commander (name, commander_rank) VALUES (:name, :rank)");
+                $stmt->execute(['name'=>$name,'rank'=>$rank]);
+            }
+            header("Location: ?entity=commander");
+            exit;
+        } else {
+            foreach ($errors as $e) echo "<p style='color:red'>".htmlspecialchars($e)."</p>";
+        }
+    }
+
+    require __DIR__ .'/../views/commander_form.php';
     exit;
 }
 
 if ($action === 'delete') {
     $id = (int)($_GET['id'] ?? 0);
-    $stmt = $pdo->prepare("DELETE FROM Commander WHERE commander_id = :id");
+    $stmt = $pdo->prepare("DELETE FROM Commander WHERE commander_id=:id");
     $stmt->execute(['id'=>$id]);
     header("Location: ?entity=commander");
     exit;

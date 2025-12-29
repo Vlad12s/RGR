@@ -1,6 +1,8 @@
 <?php
-// router.php
-echo "<h1>Лабораторна робота 4 — CRUD</h1>";
+require __DIR__ .'/db.php';
+
+echo "<h1>Розрахункова-графічна робота</h1>";
+echo "<p>Інформаційна система управління замовленнями</p>";
 echo "<ul>
 <li><a href='?entity=product'>Product</a></li>
 <li><a href='?entity=commander'>Commander</a></li>

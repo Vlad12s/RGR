@@ -1,3 +1,3 @@
 <?php
-require __DIR__ . '/../src/router.php';
-
+define('DIR', dirname(__DIR__));
+require DIR . '/src/router.php';

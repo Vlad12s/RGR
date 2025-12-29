@@ -2,7 +2,7 @@ version: '3.8'
 services:
   db:
     image: mysql:8.0
-    container_name: lab4_mysql
+    container_name: rgr_mysql
     environment:
       MYSQL_DATABASE: demo
       MYSQL_USER: app
@@ -16,7 +16,7 @@ services:
 
   php:
     build: ./app
-    container_name: lab4_php
+    container_name: rgr_php
     volumes:
       - ./app:/var/www/html
     depends_on:
@@ -24,7 +24,7 @@ services:
 
   nginx:
     image: nginx:stable
-    container_name: lab4_nginx
+    container_name: rgr_nginx
     ports:
       - "8080:80"
     volumes:

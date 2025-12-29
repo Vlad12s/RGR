@@ -1,6 +1,3 @@
-<?php
-// expects $edit (bool) and $product array
-?>
 <h1><?= $edit ? 'Edit product' : 'Create product' ?></h1>
 <form method='post'>
   Name: <input name='name' value='<?= htmlspecialchars($product['name'] ?? '') ?>' required><br><br>

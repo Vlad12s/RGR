@@ -1,6 +1,3 @@
-<?php
-// expects $edit and $commander
-?>
 <h1><?= $edit ? 'Edit commander' : 'Create commander' ?></h1>
 <form method='post'>
   Name: <input name='name' value='<?= htmlspecialchars($commander['name'] ?? '') ?>' required><br><br>

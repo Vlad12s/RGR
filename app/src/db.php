@@ -1,5 +1,5 @@
 <?php
-// db.php
+// db.php - підключення до БД
 $dsn = "mysql:host=db;dbname=demo;charset=utf8mb4";
 $user = "app";
 $pass = "secret";
